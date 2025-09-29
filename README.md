@@ -4,18 +4,33 @@ A comprehensive Streamlit application for tracking intern hours, managing delive
 
 ## 🌟 Features
 
-### For Interns
+### For Core Interns
 - **Account Registration**: Submit account requests with automatic approval workflow
 - **Hour Tracking**: Log work sessions with date, time, and descriptions
-- **Deliverables Submission**: Submit weekly deliverables with proof of work
+- **Deliverables Submission**: Submit weekly deliverables with proof of work (2 Reels/week, 1 IG Live every 2 weeks, etc.)
 - **Personal Dashboard**: View hour totals, approval status, and submission history
 - **Export Functionality**: Download personal hours and deliverables data
 
+### For Lead Interns
+- **Core Team Management**: Review and support assigned Core Interns
+- **Biweekly Check-Ins**: Conduct supportive reviews with metrics tracking
+  - Overall vibe assessment (Crushing It! / On Track / Getting There / Let's Chat)
+  - Track positives and growth areas
+  - Monitor hours compliance, content creation, meeting attendance
+  - Document DM response rates and proof of work uploads
+- **Support Plans**: Create and manage support plans for Core Interns needing help
+  - Define challenges and goals
+  - Set actionable steps
+  - Track progress and check-in dates
+- **Wins Tracking**: Celebrate and document Core Intern achievements
+- **Team Reports**: Generate reports on Core Intern progress and export data
+
 ### For Admins
-- **Account Management**: Approve/reject account requests and manage user status
+- **Account Management**: Approve/reject account requests for both Lead and Core Interns
 - **Hours Review**: Review and approve/reject submitted hours
 - **Deliverables Review**: Review deliverables with commenting system
-- **Comprehensive Reports**: Generate reports on intern activity and progress
+- **Core Review Oversight**: View Lead Intern reviews and support plans
+- **Comprehensive Reports**: Generate reports on all intern activity and progress
 - **Data Export**: Export all data to CSV for further analysis
 
 ## 🏗️ Project Structure
@@ -25,6 +40,7 @@ intern-tracker/
 ├── app.py                      # Main Streamlit application
 ├── database.py                 # Database operations and schema
 ├── auth.py                     # Authentication and session management
+├── lead_intern_portal.py       # Lead Intern portal and Core team management
 ├── requirements.txt            # Python dependencies
 ├── Dockerfile                  # Docker container configuration
 ├── docker-compose.yml          # Docker Compose for local development
@@ -207,6 +223,54 @@ git push -u origin main
 - reviewed_at: Review timestamp
 ```
 
+### Core Reviews Table (Lead Intern → Core Intern)
+```sql
+- id: Primary key
+- lead_intern_id: Foreign key to users (Lead Intern)
+- core_intern_id: Foreign key to users (Core Intern)
+- review_period: Review period (Week 1-2, Week 3-4, etc.)
+- review_date: Date of review
+- overall_vibe: Overall assessment
+- whats_working: Positive feedback
+- growth_areas: Areas for improvement
+- needs_support: Support status
+- hours_compliance: Hours tracking compliance
+- content_created: Content creation metrics
+- meeting_attendance: Meeting attendance status
+- dm_response_rate: DM response quality
+- proof_uploaded: Proof of work upload status
+- notes: Additional notes
+- created_at: Creation timestamp
+```
+
+### Support Plans Table
+```sql
+- id: Primary key
+- lead_intern_id: Foreign key to users (Lead Intern)
+- core_intern_id: Foreign key to users (Core Intern)
+- start_date: Plan start date
+- issue_challenge: Challenge description
+- goal: Support goal
+- action_steps: Action steps to achieve goal
+- check_in_date: Next check-in date
+- status: Active | In Progress | Completed | On Hold
+- created_at: Creation timestamp
+- updated_at: Last update timestamp
+```
+
+### Wins Table
+```sql
+- id: Primary key
+- lead_intern_id: Foreign key to users (Lead Intern)
+- core_intern_id: Foreign key to users (Core Intern)
+- win_date: Date of achievement
+- win_description: Description of the win
+- why_matters: Significance of the achievement
+- celebrated: Whether win was celebrated
+- notes: Additional notes
+- created_at: Creation timestamp
+```
+
 ## 🔒 Security Features
 
 - **Password Hashing**: Bcrypt encryption for all passwords
@@ -240,12 +304,54 @@ git push -u origin main
    - Filter by date range
    - Export your data to CSV
 
+### For Lead Interns
+
+1. **Review Core Interns (Biweekly)**
+   - Navigate to "Review Core Interns"
+   - Select review period (Week 1-2, Week 3-4, etc.)
+   - Choose Core Intern to review
+   - Complete supportive check-in:
+     - Rate overall vibe (Crushing It / On Track / Getting There / Let's Chat)
+     - Document what's working well (focus on positives!)
+     - Note growth areas (gentle, constructive)
+     - Track metrics (hours, content, meetings, DM responses)
+   - Submit review
+
+2. **Create Support Plans**
+   - Go to "Support Plans" when Core Intern needs help
+   - Define the challenge/issue
+   - Set achievable goal
+   - Create actionable steps
+   - Schedule check-in date
+   - Update status as plan progresses
+
+3. **Track & Celebrate Wins**
+   - Navigate to "Track Wins"
+   - Document Core Intern achievements
+   - Explain why the win matters
+   - Mark when celebrated
+   - Share positivity with your team!
+
+4. **View Reports**
+   - Check "View Reports" for team overview
+   - See individual Core Intern progress
+   - Export review data and wins to CSV
+   - Monitor support plan status
+
+**Key Responsibilities:**
+- Weekly content creation check: 2 Reels per week
+- Bi-weekly engagement: 1 Instagram Live every two weeks
+- Event leadership: 1 peer-led mini-event every 2 months
+- Support Core Intern training and orientation
+- Provide content review, campaign support, and coaching
+- Model digital storytelling and campaign leadership
+
 ### For Admins
 
 1. **Approve Accounts**
    - Review pending requests in "Account Requests"
    - Generate credentials (auto-suggested)
-   - Approve or reject requests
+   - Approve or reject requests for both Lead and Core Interns
 
 2. **Review Hours**
    - Check "Review Hours" for pending submissions
@@ -257,7 +363,12 @@ git push -u origin main
    - Review submission details and proof
    - Add comments and update status
 
-4. **Generate Reports**
+4. **Monitor Lead Reviews**
+   - Access Core Intern reviews submitted by Lead Interns
+   - View support plans and wins
+   - Ensure quality oversight
+
+5. **Generate Reports**
    - Access "Reports" section
    - View summary statistics
    - Export data for analysis

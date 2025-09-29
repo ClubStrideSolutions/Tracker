@@ -70,6 +70,66 @@ class Database:
             )
         ''')
 
+        # Core Intern Reviews table (for Lead Interns to review Core Interns)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS core_reviews (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                lead_intern_id INTEGER NOT NULL,
+                core_intern_id INTEGER NOT NULL,
+                review_period TEXT NOT NULL,
+                review_date DATE NOT NULL,
+                overall_vibe TEXT NOT NULL,
+                whats_working TEXT,
+                growth_areas TEXT,
+                needs_support TEXT,
+                hours_compliance TEXT,
+                content_created TEXT,
+                meeting_attendance TEXT,
+                dm_response_rate TEXT,
+                proof_uploaded TEXT,
+                notes TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (lead_intern_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (core_intern_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+        ''')
+
+        # Support Plans table (for Lead Interns to create support plans)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS support_plans (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                lead_intern_id INTEGER NOT NULL,
+                core_intern_id INTEGER NOT NULL,
+                start_date DATE NOT NULL,
+                issue_challenge TEXT NOT NULL,
+                goal TEXT NOT NULL,
+                action_steps TEXT NOT NULL,
+                check_in_date DATE,
+                status TEXT NOT NULL CHECK(status IN ('Active', 'In Progress', 'Completed', 'On Hold')) DEFAULT 'Active',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (lead_intern_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (core_intern_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+        ''')
+
+        # Wins/Progress table (for tracking Core Intern achievements)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS wins (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                lead_intern_id INTEGER NOT NULL,
+                core_intern_id INTEGER NOT NULL,
+                win_date DATE NOT NULL,
+                win_description TEXT NOT NULL,
+                why_matters TEXT,
+                celebrated BOOLEAN DEFAULT 0,
+                notes TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (lead_intern_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (core_intern_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+        ''')
+
         conn.commit()
         conn.close()
 
@@ -346,3 +406,212 @@ class Database:
         results = [dict(row) for row in cursor.fetchall()]
         conn.close()
         return results
+
+    # Lead Intern - Core Intern Management
+    def get_core_interns(self, lead_intern_id: int = None) -> List[Dict[str, Any]]:
+        """Get all Core Interns (optionally filtered by Lead)"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT id, name, email, school, start_date, status
+            FROM users
+            WHERE role = 'Core Intern' AND status = 'Active'
+            ORDER BY name
+        ''')
+        results = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return results
+
+    def submit_core_review(self, lead_intern_id: int, core_intern_id: int,
+                          review_period: str, overall_vibe: str, whats_working: str,
+                          growth_areas: str, needs_support: str, hours_compliance: str,
+                          content_created: str, meeting_attendance: str = "",
+                          dm_response_rate: str = "", proof_uploaded: str = "",
+                          notes: str = "") -> bool:
+        """Submit a biweekly review for a Core Intern"""
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            cursor.execute('''
+                INSERT INTO core_reviews (
+                    lead_intern_id, core_intern_id, review_period, review_date,
+                    overall_vibe, whats_working, growth_areas, needs_support,
+                    hours_compliance, content_created, meeting_attendance,
+                    dm_response_rate, proof_uploaded, notes
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (lead_intern_id, core_intern_id, review_period, datetime.now().date(),
+                  overall_vibe, whats_working, growth_areas, needs_support,
+                  hours_compliance, content_created, meeting_attendance,
+                  dm_response_rate, proof_uploaded, notes))
+            conn.commit()
+            conn.close()
+            return True
+        except Exception as e:
+            print(f"Error submitting review: {e}")
+            return False
+
+    def get_core_reviews(self, lead_intern_id: int = None,
+                        core_intern_id: int = None) -> List[Dict[str, Any]]:
+        """Get Core Intern reviews"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        query = '''
+            SELECT r.*,
+                   l.name as lead_name,
+                   c.name as core_name,
+                   c.email as core_email
+            FROM core_reviews r
+            JOIN users l ON r.lead_intern_id = l.id
+            JOIN users c ON r.core_intern_id = c.id
+            WHERE 1=1
+        '''
+        params = []
+
+        if lead_intern_id:
+            query += " AND r.lead_intern_id = ?"
+            params.append(lead_intern_id)
+
+        if core_intern_id:
+            query += " AND r.core_intern_id = ?"
+            params.append(core_intern_id)
+
+        query += " ORDER BY r.review_date DESC"
+
+        cursor.execute(query, params)
+        results = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return results
+
+    def create_support_plan(self, lead_intern_id: int, core_intern_id: int,
+                           issue_challenge: str, goal: str, action_steps: str,
+                           check_in_date: str = None) -> bool:
+        """Create a support plan for a Core Intern"""
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            cursor.execute('''
+                INSERT INTO support_plans (
+                    lead_intern_id, core_intern_id, start_date,
+                    issue_challenge, goal, action_steps, check_in_date
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', (lead_intern_id, core_intern_id, datetime.now().date(),
+                  issue_challenge, goal, action_steps, check_in_date))
+            conn.commit()
+            conn.close()
+            return True
+        except Exception as e:
+            print(f"Error creating support plan: {e}")
+            return False
+
+    def get_support_plans(self, lead_intern_id: int = None,
+                         core_intern_id: int = None,
+                         status: str = None) -> List[Dict[str, Any]]:
+        """Get support plans"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        query = '''
+            SELECT sp.*,
+                   l.name as lead_name,
+                   c.name as core_name
+            FROM support_plans sp
+            JOIN users l ON sp.lead_intern_id = l.id
+            JOIN users c ON sp.core_intern_id = c.id
+            WHERE 1=1
+        '''
+        params = []
+
+        if lead_intern_id:
+            query += " AND sp.lead_intern_id = ?"
+            params.append(lead_intern_id)
+
+        if core_intern_id:
+            query += " AND sp.core_intern_id = ?"
+            params.append(core_intern_id)
+
+        if status:
+            query += " AND sp.status = ?"
+            params.append(status)
+
+        query += " ORDER BY sp.start_date DESC"
+
+        cursor.execute(query, params)
+        results = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return results
+
+    def update_support_plan_status(self, plan_id: int, status: str) -> bool:
+        """Update support plan status"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            UPDATE support_plans
+            SET status = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ''', (status, plan_id))
+        conn.commit()
+        conn.close()
+        return True
+
+    def add_win(self, lead_intern_id: int, core_intern_id: int,
+                win_description: str, why_matters: str = "",
+                celebrated: bool = False, notes: str = "") -> bool:
+        """Add a win/achievement for a Core Intern"""
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            cursor.execute('''
+                INSERT INTO wins (
+                    lead_intern_id, core_intern_id, win_date,
+                    win_description, why_matters, celebrated, notes
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', (lead_intern_id, core_intern_id, datetime.now().date(),
+                  win_description, why_matters, celebrated, notes))
+            conn.commit()
+            conn.close()
+            return True
+        except Exception as e:
+            print(f"Error adding win: {e}")
+            return False
+
+    def get_wins(self, lead_intern_id: int = None,
+                 core_intern_id: int = None) -> List[Dict[str, Any]]:
+        """Get wins/achievements"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        query = '''
+            SELECT w.*,
+                   l.name as lead_name,
+                   c.name as core_name
+            FROM wins w
+            JOIN users l ON w.lead_intern_id = l.id
+            JOIN users c ON w.core_intern_id = c.id
+            WHERE 1=1
+        '''
+        params = []
+
+        if lead_intern_id:
+            query += " AND w.lead_intern_id = ?"
+            params.append(lead_intern_id)
+
+        if core_intern_id:
+            query += " AND w.core_intern_id = ?"
+            params.append(core_intern_id)
+
+        query += " ORDER BY w.win_date DESC"
+
+        cursor.execute(query, params)
+        results = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return results
+
+    def mark_win_celebrated(self, win_id: int) -> bool:
+        """Mark a win as celebrated"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE wins SET celebrated = 1 WHERE id = ?", (win_id,))
+        conn.commit()
+        conn.close()
+        return True

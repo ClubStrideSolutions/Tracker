@@ -3,6 +3,7 @@ import pandas as pd
 from datetime import datetime, timedelta, date, time as dt_time
 from database import Database
 from auth import Auth
+from lead_intern_portal import lead_intern_dashboard
 import io
 
 # Page configuration
@@ -699,8 +700,11 @@ def main():
     if not auth.is_authenticated():
         login_page()
     else:
+        user = auth.get_current_user()
         if auth.is_admin():
             admin_dashboard()
+        elif user['role'] == 'Lead Intern':
+            lead_intern_dashboard(db, auth)
         else:
             intern_dashboard()
 
