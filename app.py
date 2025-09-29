@@ -27,6 +27,7 @@ Auth.init_session_state()
 SCHOOLS = [
     "Vallejo High School",
     "Jesse Bethel High School",
+    "MIT High School",
     "Hogan High School",
     "St. Patrick-St. Vincent High School",
     "Solano Community College",
