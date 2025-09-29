@@ -23,14 +23,20 @@ db = init_db()
 auth = Auth(db)
 Auth.init_session_state()
 
-# Schools list
+# Schools list - Local Vallejo area schools
 SCHOOLS = [
+    "Vallejo High School",
+    "Jesse Bethel High School",
+    "Hogan High School",
+    "St. Patrick-St. Vincent High School",
+    "Solano Community College",
+    "Napa Valley College",
+    "California Maritime Academy",
+    "Touro University California",
     "University of California, Berkeley",
-    "Stanford University",
-    "University of Southern California",
-    "UCLA",
-    "San Jose State University",
-    "Santa Clara University",
+    "University of California, Davis",
+    "California State University, Sacramento",
+    "San Francisco State University",
     "Other"
 ]
 
