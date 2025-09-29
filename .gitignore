@@ -1,0 +1,9 @@
+venv/
+intern_tracker_env/
+*.pyc
+__pycache__/
+data/*.db
+.env
+.streamlit/secrets.toml
+*.log
+.DS_Store

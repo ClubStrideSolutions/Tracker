@@ -1,0 +1,10 @@
+venv/
+intern_tracker_env/
+*.pyc
+__pycache__/
+.git/
+.gitignore
+*.md
+.env
+data/*.db
+.DS_Store
