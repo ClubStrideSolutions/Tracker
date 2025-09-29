@@ -16,9 +16,15 @@ def temp_db():
     db = Database(db_path)
     yield db
 
-    # Cleanup
-    if os.path.exists(db_path):
-        os.remove(db_path)
+    # Cleanup - close all connections first
+    try:
+        del db  # Delete database object to close connections
+        if os.path.exists(db_path):
+            import time
+            time.sleep(0.1)  # Brief delay for Windows file handle release
+            os.remove(db_path)
+    except (PermissionError, OSError):
+        pass  # Ignore cleanup errors on Windows
 
 @pytest.fixture
 def db_with_users(temp_db):

@@ -175,7 +175,7 @@ class Database:
         conn = self.get_connection()
         cursor = conn.cursor()
         cursor.execute('''
-            SELECT id, name, email, school, role, start_date, created_at
+            SELECT id, name, email, school, role, start_date, status, created_at
             FROM users WHERE status = 'Pending Approval'
             ORDER BY created_at DESC
         ''')
@@ -413,7 +413,7 @@ class Database:
         conn = self.get_connection()
         cursor = conn.cursor()
         cursor.execute('''
-            SELECT id, name, email, school, start_date, status
+            SELECT id, name, email, school, role, start_date, status
             FROM users
             WHERE role = 'Core Intern' AND status = 'Active'
             ORDER BY name
